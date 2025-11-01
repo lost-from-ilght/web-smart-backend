@@ -1,0 +1,279 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://neondb_owner:npg_obN9i3qtGMDC@ep-late-queen-a42gptt6-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+//   url      = "postgresql://neondb_owner:s6XCtxD5AFao@ep-shiny-breeze-a547jrj4.us-east-2.aws.neon.tech/neondb?sslmode=require"   
+}
+
+model User {
+   id           String  @id @default(uuid()) @map("_id")
+   name       String @unique
+   email String
+   phone  String
+   password String
+   home_id  String
+   pushToken String @default("")
+   home Home @relation(references: [id], fields: [home_id])
+   // office_id  String
+   // office Office @relation(references: [id], fields: [office_id])
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+}
+
+model Home {
+   id           String  @id @default(uuid()) @map("_id")
+   name  String
+   address String
+   is_active Boolean @default(false)
+   users  User[]
+   rooms  Room[]
+   danger Danger[]
+   notfications Notification[]
+   type Type
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+} 
+enum Type {
+   home
+   office
+}
+
+model Office {
+   id           String  @id @default(uuid()) @map("_id")
+   name  String
+   address String
+   is_active Boolean @default(false)
+   // users  User[]
+   // rooms  Room[]
+   // danger Danger[]
+   // notfications Notification[]
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+} 
+
+model Room {
+    id           String  @id @default(uuid()) @map("_id")
+    name String
+    home_id String
+    home Home @relation(references: [id], fields: [home_id])
+    switches Switch[]
+    onoffs OnOff[]
+    acs Ac[]
+    musics Music[]
+    tvs Tv[]
+    gases Gas[]
+    smokes Smoke[]
+    command Command?
+    divider Divider?
+    activities Activity?
+   buttons Button[]
+   // office_id  String
+   // office Office @relation(references: [id], fields: [office_id])
+    createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+}
+
+model Switch {
+    id           String  @id @default(uuid()) @map("_id")
+    name String
+    room_id String
+    room Room @relation(references: [id], fields: [room_id])
+    value Float
+    description String?
+    createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+}
+
+model OnOff {
+  id           String  @id @default(uuid()) @map("_id")
+  name String
+  room_id String
+  room Room @relation(references: [id], fields: [room_id])
+  value Boolean
+  createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+}
+
+model Ac {
+  id           String  @id @default(uuid()) @map("_id")
+  name String
+  room_id String
+  room Room @relation(references: [id], fields: [room_id])
+  value Float
+  createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @map("_id")
+  home_id   String
+  home      Home     @relation(references: [id], fields: [home_id])
+  message   String
+  title     String
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+   office_id  String
+   // office Office @relation(references: [id], fields: [office_id])
+  updatedAt DateTime @updatedAt
+}
+
+model Gas {
+  id           String  @id @default(uuid()) @map("_id")
+  room_id      String
+  room         Room    @relation(references: [id], fields: [room_id])
+  value        Float
+  alertLevel   Float   // Threshold level for alerts
+  alertTriggered Boolean @default(false) // Indicates if an alert has been triggered
+  createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+}
+
+model Smoke {
+  id           String  @id @default(uuid()) @map("_id")
+  room_id      String
+  room         Room    @relation(references: [id], fields: [room_id])
+  value        Float
+  alertLevel   Float   // Threshold level for alerts
+  alertTriggered Boolean @default(false) // Indicates if an alert has been triggered
+  createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+}
+model Music {
+  id           String  @id @default(uuid()) @map("_id")
+  name         String
+  room_id      String
+  room         Room    @relation(references: [id], fields: [room_id])
+  volume       Float   // Current volume level
+  playing      Boolean  // Indicates if music is currently playing
+  track        String   // Current track name
+  createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+}
+
+// TV Model
+model Tv {
+  id           String  @id @default(uuid()) @map("_id")
+  name         String
+  room_id      String
+  room         Room    @relation(references: [id], fields: [room_id])
+  volume       Float   // Current volume level
+  channel      String   // Current channel name
+  isOn         Boolean  // Indicates if the TV is on or off
+  createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+}
+
+model Command {
+   id           String  @id @default(uuid()) @map("_id")
+   room_id      String  @unique
+   room         Room    @relation(references: [id], fields: [room_id])
+   mainLight    String  @default("off")
+   sideLight    String  @default("off")
+   ac           Float  @default(0)
+   charger      String  @default("off") 
+   music        String  @default("off")
+   leftHeadLight  String  @default("off")
+   rightHeadLight String  @default("off")
+   goldLight      String  @default("off")
+   whiteLight     String  @default("off")
+   tv             String  @default("off")
+   frontSideLights String  @default("off")
+   backSideLights String  @default("off")
+   wallLights  String  @default("off")
+   dangerFence  String  @default("off")
+   storRoomLight String  @default("off")
+   door String  @default("unLock") // has "lock "
+   smartCurtain String @default("open") // has "close" and "halfClose"
+   tempratureSensor Float @default(0)
+   gases String @default("on")
+   smokes String @default("on")
+   rainSensors String @default("not Rainning")
+   motionDetector String @default("not Detected")
+   waterFlowSensor Float @default(0)
+   humidtySensor Float @default(0)
+   depthSensor    Float @default(0)
+   soilmoistureSensor   Float @default(0) // wet. not wet
+   waterTanker Float @default(0)
+   plantWateringPump String @default("off")
+   stove String @default("off")
+   oven String @default("off") 
+   freezer String @default("off")
+   fan String @default("off")
+}
+
+model Activity {
+   id           String  @id @default(uuid()) @map("_id")
+   room_id      String  @unique
+   room         Room    @relation(references: [id], fields: [room_id])
+   mainLight    Boolean  @default(false)
+   sideLight    Boolean  @default(false)
+   ac           Boolean  @default(false)
+   charger      Boolean  @default(false) 
+   music        Boolean  @default(false)
+   leftHeadLight  Boolean  @default(false)
+   rightHeadLight Boolean  @default(false)
+   goldLight      Boolean  @default(false)
+   whiteLight     Boolean  @default(false)
+   tv             Boolean  @default(false)
+   frontSideLights Boolean  @default(false)
+   backSideLights Boolean  @default(false)
+   wallLights  Boolean  @default(false)
+   dangerFence  Boolean  @default(false)
+   storRoomLight Boolean  @default(false)
+   door Boolean  @default(false) // has "lock "
+   smartCurtain Boolean @default(false) // has "close" and "halfClose"
+   tempratureSensor Boolean @default(false)
+   gases Boolean @default(false)
+   smokes Boolean @default(false)
+   humiditySensor Boolean @default(false)
+   rainSensors Boolean @default(false)
+   motionDetector Boolean @default(false)
+   waterFlowSensor Boolean @default(false)
+   divider Boolean @default(false)
+   depthSensor Boolean @default(false)
+   soilmoistureSensor Boolean @default(false)
+   waterTanker Boolean @default(false)
+   plantWateringPump Boolean @default(false)
+   stove Boolean @default(false)
+   oven Boolean @default(false) 
+   freezer Boolean @default(false)
+   fan Boolean @default(false)
+}
+
+model Divider {
+   id           String  @id @default(uuid()) @map("_id")
+   room_id      String  @unique
+   room         Room    @relation(references: [id], fields: [room_id])
+   plug_1  String   @default("off")
+   plug_2  String   @default("off")
+   plug_3  String   @default("off")
+   plug_4  String   @default("off")
+   plug_5  String   @default("off")
+   plug_6  String   @default("off")
+   plug_7  String   @default("off")
+   plug_8  String   @default("off")
+}
+
+model Danger {
+   id           String  @id @default(uuid()) @map("_id")
+   home_id      String  @unique
+   home         Home    @relation(references: [id], fields: [home_id])
+   sound String   @default("on")
+   alert String   @default("off")
+
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+}
+
+model Button {
+   id           String  @id @default(uuid()) @map("_id")
+   name         String
+   room_id      String
+   room         Room    @relation(references: [id], fields: [room_id])
+   value        String // on off
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+}
