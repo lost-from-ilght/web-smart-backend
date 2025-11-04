@@ -52,6 +52,16 @@ const roomController = {
   getRooms: async (req, res) => {
     try {
       const {id} = req.params
+      
+      // Validate that the home_id exists
+      const home = await prisma.home.findUnique({
+        where: { id }
+      });
+      
+      if (!home) {
+        return res.status(404).json({ error: "Home not found" });
+      }
+      
       const rooms = await prisma.room.findMany({
         where:{
           home_id:id
@@ -60,11 +70,8 @@ const roomController = {
           switches: true,
           onoffs: true,
           acs: true,
-          // tempratures: true,
-          // humidities: true,
           musics: true,
           tvs: true,
-          home:true,
           gases: true,
           smokes: true,
          command: true,
@@ -72,7 +79,94 @@ const roomController = {
          divider: true
         }
       });
-      res.status(200).json(rooms);
+      
+      // Optimize response - only include necessary fields
+      const optimizedRooms = rooms.map(room => {
+        // Extract command without id and room_id
+        let command = null;
+        if (room.command) {
+          const { id: cmdId, room_id: cmdRoomId, ...cmdFields } = room.command;
+          command = cmdFields;
+        }
+        
+        // Extract divider without id and room_id
+        let divider = null;
+        if (room.divider) {
+          const { id: divId, room_id: divRoomId, ...divFields } = room.divider;
+          divider = divFields;
+        }
+        
+        // Extract activities without id and room_id
+        let activities = {};
+        if (room.activities) {
+          const { id: actId, room_id: actRoomId, ...actFields } = room.activities;
+          activities = actFields;
+        }
+        
+        // Optimize device arrays - only include necessary fields
+        const optimizedSwitches = (room.switches || []).map(sw => ({
+          id: sw.id,
+          name: sw.name,
+          value: sw.value,
+          description: sw.description
+        }));
+        
+        const optimizedOnoffs = (room.onoffs || []).map(oo => ({
+          id: oo.id,
+          name: oo.name,
+          value: oo.value
+        }));
+        
+        const optimizedAcs = (room.acs || []).map(ac => ({
+          id: ac.id,
+          name: ac.name,
+          value: ac.value
+        }));
+        
+        const optimizedMusics = (room.musics || []).map(m => ({
+          id: m.id,
+          name: m.name,
+          volume: m.volume,
+          playing: m.playing
+        }));
+        
+        const optimizedTvs = (room.tvs || []).map(tv => ({
+          id: tv.id,
+          name: tv.name,
+          channel: tv.channel,
+          volume: tv.volume,
+          isOn: tv.isOn
+        }));
+        
+        const optimizedGases = (room.gases || []).map(g => ({
+          id: g.id,
+          value: g.value,
+          alertTriggered: g.alertTriggered
+        }));
+        
+        const optimizedSmokes = (room.smokes || []).map(s => ({
+          id: s.id,
+          value: s.value,
+          alertTriggered: s.alertTriggered
+        }));
+        
+        return {
+          id: room.id,
+          name: room.name,
+          // switches: optimizedSwitches,
+          // onoffs: optimizedOnoffs,
+          // acs: optimizedAcs,
+          // musics: optimizedMusics,
+          // tvs: optimizedTvs,
+          // gases: optimizedGases,
+          // smokes: optimizedSmokes,
+          command: command,
+          activities: activities,
+          // divider: divider
+        };
+      });
+      
+      res.status(200).json(optimizedRooms);
     } catch (error) {
       console.error("Error retrieving rooms:", error);
       res.status(500).json({ error: "Failed to get rooms" });
@@ -88,11 +182,8 @@ const roomController = {
           switches: true,
           onoffs: true,
           acs: true,
-          // tempratures: true,
-          // humidities: true,
           musics: true,
           tvs: true,
-          home:true,
           gases: true,
           smokes: true,
          command: true,
@@ -105,7 +196,93 @@ const roomController = {
       if (!room) {
         return res.status(404).json({ error: "Room not found" });
       }
-      res.status(200).json(room);
+      
+      // Optimize response - only include necessary fields
+      // Extract command without id and room_id
+      let command = null;
+      if (room.command) {
+        const { id: cmdId, room_id: cmdRoomId, ...cmdFields } = room.command;
+        command = cmdFields;
+      }
+      
+      // Extract divider without id and room_id
+      let divider = null;
+      if (room.divider) {
+        const { id: divId, room_id: divRoomId, ...divFields } = room.divider;
+        divider = divFields;
+      }
+      
+      // Extract activities without id and room_id
+      let activities = {};
+      if (room.activities) {
+        const { id: actId, room_id: actRoomId, ...actFields } = room.activities;
+        activities = actFields;
+      }
+      
+      // Optimize device arrays - only include necessary fields
+      const optimizedSwitches = (room.switches || []).map(sw => ({
+        id: sw.id,
+        name: sw.name,
+        value: sw.value,
+        description: sw.description
+      }));
+      
+      const optimizedOnoffs = (room.onoffs || []).map(oo => ({
+        id: oo.id,
+        name: oo.name,
+        value: oo.value
+      }));
+      
+      const optimizedAcs = (room.acs || []).map(ac => ({
+        id: ac.id,
+        name: ac.name,
+        value: ac.value
+      }));
+      
+      const optimizedMusics = (room.musics || []).map(m => ({
+        id: m.id,
+        name: m.name,
+        volume: m.volume,
+        playing: m.playing
+      }));
+      
+      const optimizedTvs = (room.tvs || []).map(tv => ({
+        id: tv.id,
+        name: tv.name,
+        channel: tv.channel,
+        volume: tv.volume,
+        isOn: tv.isOn
+      }));
+      
+      const optimizedGases = (room.gases || []).map(g => ({
+        id: g.id,
+        value: g.value,
+        alertTriggered: g.alertTriggered
+      }));
+      
+      const optimizedSmokes = (room.smokes || []).map(s => ({
+        id: s.id,
+        value: s.value,
+        alertTriggered: s.alertTriggered
+      }));
+      
+      const optimizedRoom = {
+        id: room.id,
+        name: room.name,
+        switches: optimizedSwitches,
+        onoffs: optimizedOnoffs,
+        acs: optimizedAcs,
+        musics: optimizedMusics,
+        tvs: optimizedTvs,
+        gases: optimizedGases,
+        smokes: optimizedSmokes,
+        command: command,
+        activities: activities,
+        divider: divider,
+        buttons: room.buttons || [] // Include buttons if needed
+      };
+      
+      res.status(200).json(optimizedRoom);
     } catch (error) {
       console.error("Error retrieving room:", error);
       res.status(500).json({ error: "Failed to get the room" });
