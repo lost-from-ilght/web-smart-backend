@@ -43,6 +43,13 @@ const commandController = {
         freezer ,
         fan ,
         charger,
+        centerLight,
+        spotLight,
+        shadowLight,
+        diningLight,
+        colliderLight,
+        stove1,
+        stove2,
       } = req.body;
       if(soilmoistureSensor){
         console.log("soilmoistureSensor: " + soilmoistureSensor)
@@ -103,6 +110,13 @@ const commandController = {
 
           waterTanker: waterTanker || command.waterTanker,
           charger: charger || command.charger,
+          centerLight: centerLight || command.centerLight,
+          spotLight: spotLight || command.spotLight,
+          shadowLight: shadowLight || command.shadowLight,
+          diningLight: diningLight || command.diningLight,
+          colliderLight: colliderLight || command.colliderLight,
+          stove1: stove1 || command.stove1,
+          stove2: stove2 || command.stove2,
         },
       });
   

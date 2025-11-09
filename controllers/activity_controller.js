@@ -38,6 +38,13 @@ const activityController = {
         oven, 
         freezer,
         fan,
+        centerLight,
+        spotLight,
+        shadowLight,
+        diningLight,
+        colliderLight,
+        stove1,
+        stove2,
       } = req.body;
   
       if (req.body.hasOwnProperty("divider")) {
@@ -106,6 +113,13 @@ const activityController = {
         oven, 
         freezer,
         fan,
+        centerLight,
+        spotLight,
+        shadowLight,
+        diningLight,
+        colliderLight,
+        stove1,
+        stove2,
       };
   
       if (req.body.hasOwnProperty("divider")) {

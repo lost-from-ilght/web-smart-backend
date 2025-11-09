@@ -168,7 +168,14 @@ async function seedDatabase() {
           stove: "off",
           oven: "off",
           freezer: "off",
-          fan: "off"
+          fan: "off",
+          centerLight: "off",
+          spotLight: "off",
+          shadowLight: "off",
+          diningLight: "off",
+          colliderLight: "off",
+          stove1: "off",
+          stove2: "off"
         }
       });
 
@@ -210,7 +217,14 @@ async function seedDatabase() {
           stove: false,
           oven: false,
           freezer: false,
-          fan: false
+          fan: false,
+          centerLight: false,
+          spotLight: false,
+          shadowLight: false,
+          diningLight: false,
+          colliderLight: false,
+          stove1: false,
+          stove2: false
         }
       });
 

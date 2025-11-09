@@ -1,22 +1,93 @@
 import prisma from "../config/prisma_config.js";
+
 async function deleteAllData() {
   try {
-    // Replace "collectionName" with the name of your MongoDB collection
+    console.log('🗑️  Starting database cleanup...');
 
-
-    const deleteResult = await prisma.office.deleteMany({
+    // Delete in order to respect foreign key constraints
     
-    });
-    console.log(`Deleted ${deleteResult.length} records.`);
+    // 1. Delete records that reference Room
+    console.log('Deleting Buttons...');
+    const buttons = await prisma.button.deleteMany({});
+    console.log(`   ✅ Deleted ${buttons.count} buttons`);
 
-    console.log('All data deleted successfully.');
+    console.log('Deleting Commands...');
+    const commands = await prisma.command.deleteMany({});
+    console.log(`   ✅ Deleted ${commands.count} commands`);
+
+    console.log('Deleting Activities...');
+    const activities = await prisma.activity.deleteMany({});
+    console.log(`   ✅ Deleted ${activities.count} activities`);
+
+    console.log('Deleting Dividers...');
+    const dividers = await prisma.divider.deleteMany({});
+    console.log(`   ✅ Deleted ${dividers.count} dividers`);
+
+    console.log('Deleting Switches...');
+    const switches = await prisma.switch.deleteMany({});
+    console.log(`   ✅ Deleted ${switches.count} switches`);
+
+    console.log('Deleting OnOffs...');
+    const onoffs = await prisma.onOff.deleteMany({});
+    console.log(`   ✅ Deleted ${onoffs.count} onoffs`);
+
+    console.log('Deleting ACs...');
+    const acs = await prisma.ac.deleteMany({});
+    console.log(`   ✅ Deleted ${acs.count} ACs`);
+
+    console.log('Deleting Musics...');
+    const musics = await prisma.music.deleteMany({});
+    console.log(`   ✅ Deleted ${musics.count} musics`);
+
+    console.log('Deleting TVs...');
+    const tvs = await prisma.tv.deleteMany({});
+    console.log(`   ✅ Deleted ${tvs.count} TVs`);
+
+    console.log('Deleting Gases...');
+    const gases = await prisma.gas.deleteMany({});
+    console.log(`   ✅ Deleted ${gases.count} gases`);
+
+    console.log('Deleting Smokes...');
+    const smokes = await prisma.smoke.deleteMany({});
+    console.log(`   ✅ Deleted ${smokes.count} smokes`);
+
+    // 2. Delete Rooms (references Home)
+    console.log('Deleting Rooms...');
+    const rooms = await prisma.room.deleteMany({});
+    console.log(`   ✅ Deleted ${rooms.count} rooms`);
+
+    // 3. Delete records that reference Home
+    console.log('Deleting Notifications...');
+    const notifications = await prisma.notification.deleteMany({});
+    console.log(`   ✅ Deleted ${notifications.count} notifications`);
+
+    console.log('Deleting Dangers...');
+    const dangers = await prisma.danger.deleteMany({});
+    console.log(`   ✅ Deleted ${dangers.count} dangers`);
+
+    // 4. Delete Users (references Home)
+    console.log('Deleting Users...');
+    const users = await prisma.user.deleteMany({});
+    console.log(`   ✅ Deleted ${users.count} users`);
+
+    // 5. Delete Homes
+    console.log('Deleting Homes...');
+    const homes = await prisma.home.deleteMany({});
+    console.log(`   ✅ Deleted ${homes.count} homes`);
+
+    // 6. Delete Offices
+    console.log('Deleting Offices...');
+    const offices = await prisma.office.deleteMany({});
+    console.log(`   ✅ Deleted ${offices.count} offices`);
+
+    console.log('✅ All data deleted successfully!');
   } catch (error) {
-    console.error('Error deleting data:', error);
+    console.error('❌ Error deleting data:', error);
+    throw error;
   } finally {
     await prisma.$disconnect();
   }
 }
-
 
 deleteAllData();
 

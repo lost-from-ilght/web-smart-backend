@@ -1,203 +1,236 @@
 #include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>
 #include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 
-// ===== WiFi =====
+// ================= CONFIGURATION =================
 const char* ssid = "MoLS Staff";
 const char* password = "Staff@321$$";
+const char* apiUrl = "https://web-smart-backend.onrender.com/api/room/d4a172af-579a-4cd8-80e3-1ec875ad71c1";
 
-// ===== Backend =====
-const char* serverURL = "https://web-smart-backend.onrender.com/api/room/d4a172af-579a-4cd8-80e3-1ec875ad71c1";
+// ================= RELAY PIN MAPPING =================
+// Living Room
+#define RELAY_CHARGER 16   // GPIO16/D0
+#define RELAY_DOOR    5    // GPIO5/D1
+#define RELAY_FAN     4    // GPIO4/D2
 
-// ===== Room IDs =====
-const char* LIVING_ROOM_ID = "a60349d9-9860-4f77-9900-95c027883fa1";
-const char* KITCHEN_ID     = "d9b29bd0-f298-4138-b851-a7dbc20d0595";
+// Kitchen
+#define RELAY_STOVE   14   // GPIO14/D5
+#define RELAY_OVEN    12   // GPIO12/D6
+#define RELAY_FREEZER 15   // GPIO15/D8
 
-// ===== Relay Pins (for reference) =====
-#define LR_CENTER_LIGHT 16
-#define LR_SPOT_LIGHT    5
-#define LR_SHADOW_LIGHT  4
-#define LR_DINING_LIGHT  0
-#define LR_TV            2
+// ================= GLOBALS =================
+WiFiClientSecure client;
 
-#define K_CENTER_LIGHT  14
-#define K_PLUG          12
-#define K_STOVE         15
+// ================= HELPER FUNCTIONS =================
+bool isOn(JsonVariant value) {
+  // Handle string values: "on", "off"
+  if (value.is<const char*>()) {
+    String s = value.as<const char*>();
+    s.toLowerCase();
+    return (s == "on" || s == "true" || s == "1");
+  }
+  // Handle numeric values: 1 = on, 0 = off
+  if (value.is<int>()) {
+    return value.as<int>() == 1;
+  }
+  // Handle boolean values
+  if (value.is<bool>()) {
+    return value.as<bool>();
+  }
+  // Default to off
+  return false;
+}
 
-// ===== Setup =====
+void setRelay(int pin, JsonVariant value, const char* name) {
+  // Active LOW relay - read from COMMAND only (not activities)
+  bool state = isOn(value);
+  if (value.isNull()) {
+    Serial.printf("   ⚠️ %s not found in command\n", name);
+    return;
+  }
+  digitalWrite(pin, state ? LOW : HIGH);
+  Serial.printf("   %s: %s\n", name, state ? "ON 🔆" : "OFF 💤");
+}
+
+// ================= SETUP =================
 void setup() {
   Serial.begin(115200);
-  delay(100);
+  delay(1000);
 
+  pinMode(RELAY_CHARGER, OUTPUT);
+  pinMode(RELAY_DOOR, OUTPUT);
+  pinMode(RELAY_FAN, OUTPUT);
+  pinMode(RELAY_STOVE, OUTPUT);
+  pinMode(RELAY_OVEN, OUTPUT);
+  pinMode(RELAY_FREEZER, OUTPUT);
+
+  // Turn all relays OFF initially
+  digitalWrite(RELAY_CHARGER, HIGH);
+  digitalWrite(RELAY_DOOR, HIGH);
+  digitalWrite(RELAY_FAN, HIGH);
+  digitalWrite(RELAY_STOVE, HIGH);
+  digitalWrite(RELAY_OVEN, HIGH);
+  digitalWrite(RELAY_FREEZER, HIGH);
+
+  Serial.print("🌐 Connecting to WiFi");
   WiFi.begin(ssid, password);
-  Serial.print("🔌 Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("\n✅ WiFi Connected!");
-  Serial.print("IP: "); Serial.println(WiFi.localIP());
+  Serial.print("IP Address: "); Serial.println(WiFi.localIP());
+  
+  client.setInsecure(); // Skip SSL certificate verification
 }
 
-// ===== Convert state string/number to ON/OFF =====
-String stateToString(JsonVariant val) {
-  if (!val.isNull()) {
-    if (val.is<bool>()) return val.as<bool>() ? "ON" : "OFF";
-    if (val.is<int>())  return val.as<int>() ? "ON" : "OFF";
-    if (val.is<const char*>()) {
-      String s = val.as<const char*>();
-      s.toLowerCase();
-      if (s == "on" || s == "true" || s == "1") return "ON";
-      else return "OFF";
-    }
-  }
-  return "OFF";
-}
+// ================= LOOP =================
+void loop() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(client, apiUrl);
+    http.setTimeout(10000); // 10 second timeout
+    http.setReuse(false);
 
-// ===== Fetch backend and print device statuses =====
-void fetchAndPrintStatus() {
-  if (WiFi.status() != WL_CONNECTED) return;
-
-  WiFiClientSecure client;
-  client.setInsecure(); // ignore SSL cert
-  client.setTimeout(20000); // 20 second timeout for SSL connections
-  
-  HTTPClient https;
-  https.begin(client, serverURL);
-  https.setTimeout(20000); // 20 second timeout for HTTP client
-  https.setReuse(false); // Don't reuse connection to avoid issues
-  
-  // Add headers to ensure proper response
-  https.addHeader("Accept", "application/json");
-  https.addHeader("Connection", "close");
-  
-  int httpCode = https.GET();
-
-  if (httpCode == 200) {
-    Serial.printf("\n📩 Data Received (HTTP %d)\n", httpCode);
-
-    // Get content length if available
-    int contentLength = https.getSize();
-    Serial.print("📦 Content-Length: ");
-    Serial.print(contentLength);
-    Serial.println(" bytes");
-
-    // Read stream in chunks to ensure complete data
-    String payload = "";
-    payload.reserve(contentLength > 0 ? contentLength + 1024 : 16384); // Pre-allocate if we know size
-    WiFiClient *stream = https.getStreamPtr();
+    Serial.println("\n🌐 Fetching data from server...");
+    int httpCode = http.GET();
     
-    unsigned long startTime = millis();
-    unsigned long lastDataTime = millis();
-    const unsigned long maxWaitTime = 15000; // 15 seconds max wait
-    const size_t bufferSize = 512; // Read in 512 byte chunks
-    char buffer[bufferSize + 1]; // +1 for null terminator
+    Serial.printf("HTTP Response Code: %d\n", httpCode);
     
-    while (true) {
-      size_t available = stream->available();
-      if (available > 0) {
-        size_t toRead = (available > bufferSize) ? bufferSize : available;
-        size_t bytesRead = stream->readBytes(buffer, toRead);
-        if (bytesRead > 0) {
-          buffer[bytesRead] = '\0'; // Null terminate for String
-          payload.concat(buffer);
-          lastDataTime = millis(); // Reset timeout when we get data
+    if (httpCode == 200) {
+      // Wait for data to be available
+      int len = http.getSize();
+      Serial.printf("Content Length: %d bytes\n", len);
+      
+      // Read the payload - wait a bit for data to arrive
+      delay(100);
+      String payload = http.getString();
+      
+      // If payload seems empty or too short, try reading from stream
+      if (payload.length() == 0 || payload.length() < 10) {
+        WiFiClient* stream = http.getStreamPtr();
+        if (stream) {
+          unsigned long timeout = millis();
+          while (stream->available() == 0 && (millis() - timeout < 5000)) {
+            delay(10);
+          }
+          
+          payload = "";
+          while (stream->available()) {
+            payload += (char)stream->read();
+          }
+        }
+      }
+
+      Serial.printf("Payload length: %d bytes\n", payload.length());
+      
+      // Extract JSON from payload (in case there are HTTP headers)
+      int jsonStart = payload.indexOf('{');
+      if (jsonStart == -1) jsonStart = payload.indexOf('[');
+      
+      if (jsonStart > 0) {
+        payload = payload.substring(jsonStart);
+        Serial.println("⚠️ Removed HTTP headers, JSON starts at position");
+      }
+      
+      if (payload.length() < 100) {
+        Serial.print("Payload preview: ");
+        Serial.println(payload);
+      } else {
+        Serial.print("Payload preview (first 200 chars): ");
+        Serial.println(payload.substring(0, 200));
+      }
+
+      DynamicJsonDocument doc(16384);
+      DeserializationError err = deserializeJson(doc, payload);
+
+      if (err) {
+        Serial.print("❌ JSON Parse Error: ");
+        Serial.println(err.c_str());
+        Serial.print("Payload length: ");
+        Serial.println(payload.length());
+        if (payload.length() > 0) {
+          Serial.print("First 100 chars: ");
+          Serial.println(payload.substring(0, 100));
         }
       } else {
-        // If no data available and we've waited 2 seconds since last data, assume complete
-        if (millis() - lastDataTime > 2000) {
-          break;
-        }
-      }
-      
-      // Safety timeout - don't wait more than maxWaitTime total
-      if (millis() - startTime > maxWaitTime) {
-        Serial.println("⚠️ Timeout while reading stream");
-        break;
-      }
-      
-      delay(1);
-    }
-    
-    Serial.print("📦 Payload read: ");
-    Serial.print(payload.length());
-    Serial.println(" bytes");
+        Serial.println("✅ JSON Parsed Successfully!");
+        Serial.println("📦 Applying relay states...");
 
-    // Check if payload seems complete (ends with ])
-    if (payload.length() > 0 && payload.charAt(payload.length() - 1) != ']') {
-      Serial.println("⚠️ Warning: Payload may be incomplete (doesn't end with ']')");
-      Serial.print("Last 50 chars: ");
-      Serial.println(payload.substring(payload.length() - 50));
-    }
+        // Handle both array and single object responses
+        if (doc.is<JsonArray>()) {
+          // Case: JSON is an array of rooms
+          Serial.println("📋 Response is an array of rooms");
+          for (JsonObject room : doc.as<JsonArray>()) {
+            String roomName = room["name"].as<String>();
+            
+            // Ensure command object exists
+            if (!room.containsKey("command")) {
+              Serial.printf("⚠️ No 'command' found for room: %s\n", roomName.c_str());
+              continue;
+            }
+            
+            JsonObject cmd = room["command"]; // Read from COMMAND, not activities
 
-    // Calculate appropriate buffer size (JSON needs ~1.3x the raw size)
-    size_t jsonSize = payload.length() * 1.3 + 8192; // Add 8KB safety margin
-    if (jsonSize > 65536) jsonSize = 65536; // Cap at 64KB for ESP8266
-    
-    Serial.print("📦 Allocating JSON buffer: ");
-    Serial.print(jsonSize);
-    Serial.println(" bytes");
-    
-    DynamicJsonDocument doc(jsonSize);
-    
-    DeserializationError err = deserializeJson(doc, payload);
+            if (roomName == "Living Room") {
+              Serial.println("---------------------------------");
+              Serial.println("🏠 Living Room Summary (from COMMAND):");
+              setRelay(RELAY_CHARGER, cmd["charger"], "Charger");
+              setRelay(RELAY_DOOR, cmd["door"], "Door");
+              setRelay(RELAY_FAN, cmd["fan"], "Fan");
+            }
 
-    if (err) {
-      Serial.print("❌ JSON Parse Error: ");
-      Serial.println(err.c_str());
-      Serial.print("Error code: ");
-      Serial.println(err.code());
-      Serial.print("Payload length: ");
-      Serial.println(payload.length());
-      Serial.print("Payload preview (first 500 chars): ");
-      Serial.println(payload.substring(0, 500));
-      Serial.print("Payload ending (last 100 chars): ");
-      Serial.println(payload.substring(payload.length() - 100));
-      https.end();
-      return;
-    }
+            else if (roomName == "Kitchen") {
+              Serial.println("🍳 Kitchen Summary (from COMMAND):");
+              setRelay(RELAY_STOVE, cmd["stove"], "Stove");
+              setRelay(RELAY_OVEN, cmd["oven"], "Oven");
+              setRelay(RELAY_FREEZER, cmd["freezer"], "Freezer");
+            }
+          }
+        } else if (doc.is<JsonObject>()) {
+          // Case: JSON is a single room object
+          Serial.println("📋 Response is a single room object");
+          JsonObject room = doc.as<JsonObject>();
+          String roomName = room["name"].as<String>();
+          
+          if (!room.containsKey("command")) {
+            Serial.printf("⚠️ No 'command' found for room: %s\n", roomName.c_str());
+          } else {
+            JsonObject cmd = room["command"]; // Read from COMMAND, not activities
 
-    Serial.println("✅ JSON parsed successfully.\n===== DEVICE STATUS =====");
+            if (roomName == "Living Room") {
+              Serial.println("---------------------------------");
+              Serial.println("🏠 Living Room Summary (from COMMAND):");
+              setRelay(RELAY_CHARGER, cmd["charger"], "Charger");
+              setRelay(RELAY_DOOR, cmd["door"], "Door");
+              setRelay(RELAY_FAN, cmd["fan"], "Fan");
+            }
 
-    // Iterate rooms
-    for (JsonObject room : doc.as<JsonArray>()) {
-      const char* roomId = room["id"];
-      const char* roomName = room["name"];
-      JsonObject command = room["command"];
-      JsonObject divider = room["divider"];
-
-      // Only print Living Room and Kitchen
-      if (strcmp(roomId, LIVING_ROOM_ID) == 0 || strcmp(roomId, KITCHEN_ID) == 0) {
-        Serial.printf("\n🏠 %s:\n", roomName);
-
-        // Print command devices
-        for (JsonPair kv : command) {
-          const char* name = kv.key().c_str();
-          String state = stateToString(kv.value());
-          Serial.printf("   🔹 %s: %s\n", name, state.c_str());
+            else if (roomName == "Kitchen") {
+              Serial.println("🍳 Kitchen Summary (from COMMAND):");
+              setRelay(RELAY_STOVE, cmd["stove"], "Stove");
+              setRelay(RELAY_OVEN, cmd["oven"], "Oven");
+              setRelay(RELAY_FREEZER, cmd["freezer"], "Freezer");
+            }
+          }
+        } else {
+          Serial.println("❌ Unknown JSON structure");
         }
 
-        // Print divider devices
-        for (JsonPair kv : divider) {
-          const char* name = kv.key().c_str();
-          if (strcmp(name, "room_id") == 0 || strcmp(name, "id") == 0) continue;
-          String state = stateToString(kv.value());
-          Serial.printf("   🔹 %s: %s\n", name, state.c_str());
-        }
+        Serial.println("✅ All relays updated successfully!");
+        Serial.println("=================================");
+        Serial.println();
       }
+    } else {
+      Serial.printf("❌ Connection failed (HTTP %d)\n", httpCode);
     }
 
-    Serial.println("==========================\n");
-  }
-  else {
-    Serial.printf("❌ HTTP Error: %d\n", httpCode);
+    http.end();
+  } else {
+    Serial.println("🚫 WiFi disconnected, retrying...");
+    WiFi.reconnect();
   }
 
-  https.end();
-}
-
-// ===== Loop =====
-void loop() {
-  fetchAndPrintStatus();
-  delay(8000); // every 8 seconds
+  delay(8000); // Refresh every 8 seconds
 }

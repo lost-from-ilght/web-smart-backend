@@ -212,13 +212,7 @@ const roomController = {
         divider = divFields;
       }
       
-      // Extract activities without id and room_id
-      let activities = {};
-      if (room.activities) {
-        const { id: actId, room_id: actRoomId, ...actFields } = room.activities;
-        activities = actFields;
-      }
-      
+
       // Optimize device arrays - only include necessary fields
       const optimizedSwitches = (room.switches || []).map(sw => ({
         id: sw.id,
@@ -277,7 +271,7 @@ const roomController = {
         gases: optimizedGases,
         smokes: optimizedSmokes,
         command: command,
-        activities: activities,
+        activities: room.activities,
         divider: divider,
         buttons: room.buttons || [] // Include buttons if needed
       };
