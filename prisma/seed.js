@@ -4,14 +4,17 @@ async function seedDatabase() {
   try {
     console.log('🌱 Starting database seeding...');
 
-    // First, create a default home
-    let home = await prisma.home.findFirst({
-      where: { name: "Smart Home" }
+    // First, create a default home with the expected ID
+    const EXPECTED_HOME_ID = "d4a172af-579a-4cd8-80e3-1ec875ad71c1";
+    
+    let home = await prisma.home.findUnique({
+      where: { id: EXPECTED_HOME_ID }
     });
     
     if (!home) {
       home = await prisma.home.create({
         data: {
+          id: EXPECTED_HOME_ID,
           name: "Smart Home",
           address: "123 Smart Street, Tech City",
           is_active: true,
@@ -19,7 +22,7 @@ async function seedDatabase() {
         }
       });
     }
-    console.log('✅ Home created:', home.name);
+    console.log('✅ Home created:', home.name, `(ID: ${home.id})`);
 
     // Define all rooms
     const rooms = [
