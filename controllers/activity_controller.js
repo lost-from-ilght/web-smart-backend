@@ -45,6 +45,8 @@ const activityController = {
         colliderLight,
         stove1,
         stove2,
+        strippeLight,
+        diningStrippeLight,
       } = req.body;
   
       if (req.body.hasOwnProperty("divider")) {
@@ -120,6 +122,8 @@ const activityController = {
         colliderLight,
         stove1,
         stove2,
+        strippeLight,
+        diningStrippeLight,
       };
   
       if (req.body.hasOwnProperty("divider")) {

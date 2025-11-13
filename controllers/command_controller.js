@@ -50,6 +50,8 @@ const commandController = {
         colliderLight,
         stove1,
         stove2,
+        strippeLight,
+        diningStrippeLight,
       } = req.body;
       if(soilmoistureSensor){
         console.log("soilmoistureSensor: " + soilmoistureSensor)
@@ -117,6 +119,8 @@ const commandController = {
           colliderLight: colliderLight || command.colliderLight,
           stove1: stove1 || command.stove1,
           stove2: stove2 || command.stove2,
+          strippeLight: strippeLight || command.strippeLight,
+          diningStrippeLight: diningStrippeLight || command.diningStrippeLight,
         },
       });
   

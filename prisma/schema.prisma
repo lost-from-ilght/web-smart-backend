@@ -209,6 +209,8 @@ model Command {
    colliderLight String @default("off")
    stove1 String @default("off")
    stove2 String @default("off")
+   strippeLight String @default("off")
+   diningStrippeLight String @default("off")
 }
 
 model Activity {
@@ -255,6 +257,8 @@ model Activity {
    colliderLight Boolean @default(false)
    stove1 Boolean @default(false)
    stove2 Boolean @default(false)
+   strippeLight Boolean @default(false)
+   diningStrippeLight Boolean @default(false)
 }
 
 model Divider {

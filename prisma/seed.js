@@ -59,79 +59,6 @@ async function seedDatabase() {
       console.log(`✅ Room created: ${roomName}`);
     }
 
-    // Define devices and their room assignments
-    const deviceAssignments = [
-      // Living Room devices
-      { name: "Center light", room: "Living Room", type: "switch", value: 0 },
-      { name: "Spot light", room: "Living Room", type: "switch", value: 0 },
-      { name: "Shadow light", room: "Living Room", type: "switch", value: 0 },
-      
-      // Kitchen devices
-      { name: "Dining light", room: "Kitchen", type: "switch", value: 0 },
-      { name: "Collider light", room: "Kitchen", type: "switch", value: 0 },
-      { name: "Washing machine", room: "Kitchen", type: "onoff", value: false },
-      { name: "Stove 1", room: "Kitchen", type: "onoff", value: false },
-      { name: "Stove 2", room: "Kitchen", type: "onoff", value: false },
-      
-      // Bath Room devices
-      { name: "Sucker fan", room: "Bath Room", type: "onoff", value: false },
-      
-      // Outdoor devices
-      { name: "Outdoor light", room: "Outdoor", type: "switch", value: 0 },
-      
-      // Store devices
-      { name: "Store light", room: "Store", type: "switch", value: 0 },
-      
-      // Bedroom devices (each bedroom gets basic lighting)
-      { name: "Master Bed light", room: "Master Bed Room", type: "switch", value: 0 },
-      { name: "2nd Bed light", room: "2nd Bed Room", type: "switch", value: 0 },
-      { name: "3rd Bed light", room: "3rd Bed Room", type: "switch", value: 0 },
-      { name: "4th Bed light", room: "4th Bed room", type: "switch", value: 0 }
-    ];
-
-    // Create devices
-    for (const device of deviceAssignments) {
-      const room = createdRooms.find(r => r.name === device.room);
-      
-      if (device.type === "switch") {
-        let existingSwitch = await prisma.switch.findFirst({
-          where: {
-            name: device.name,
-            room_id: room.id
-          }
-        });
-        
-        if (!existingSwitch) {
-          await prisma.switch.create({
-            data: {
-              name: device.name,
-              room_id: room.id,
-              value: device.value,
-              description: `Smart ${device.name} in ${device.room}`
-            }
-          });
-        }
-      } else if (device.type === "onoff") {
-        let existingOnOff = await prisma.onOff.findFirst({
-          where: {
-            name: device.name,
-            room_id: room.id
-          }
-        });
-        
-        if (!existingOnOff) {
-          await prisma.onOff.create({
-            data: {
-              name: device.name,
-              room_id: room.id,
-              value: device.value
-            }
-          });
-        }
-      }
-      console.log(`✅ Device created: ${device.name} in ${device.room}`);
-    }
-
     // Create Command and Activity records for each room
     for (const room of createdRooms) {
       // Create Command record
@@ -178,7 +105,9 @@ async function seedDatabase() {
           diningLight: "off",
           colliderLight: "off",
           stove1: "off",
-          stove2: "off"
+          stove2: "off",
+          strippeLight: "off",
+          diningStrippeLight: "off"
         }
       });
 
@@ -227,7 +156,9 @@ async function seedDatabase() {
           diningLight: false,
           colliderLight: false,
           stove1: false,
-          stove2: false
+          stove2: false,
+          strippeLight: false,
+          diningStrippeLight: false
         }
       });
 
@@ -267,7 +198,6 @@ async function seedDatabase() {
     console.log(`📊 Summary:`);
     console.log(`   - 1 Home created`);
     console.log(`   - ${rooms.length} Rooms created`);
-    console.log(`   - ${deviceAssignments.length} Devices created`);
     console.log(`   - ${rooms.length} Command records created`);
     console.log(`   - ${rooms.length} Activity records created`);
     console.log(`   - ${rooms.length} Divider records created`);
