@@ -67,34 +67,7 @@ async function seedDatabase() {
         update: {},
         create: {
           room_id: room.id,
-          mainLight: "off",
-          sideLight: "off",
-          ac: 0,
-          charger: "off",
-          music: "off",
-          leftHeadLight: "off",
-          rightHeadLight: "off",
-          goldLight: "off",
-          whiteLight: "off",
-          tv: "off",
-          frontSideLights: "off",
-          backSideLights: "off",
-          wallLights: "off",
-          dangerFence: "off",
-          storRoomLight: "off",
-          door: "unLock",
-          smartCurtain: "open",
-          tempratureSensor: 0,
-          gases: "on",
-          smokes: "on",
-          rainSensors: "not Rainning",
-          motionDetector: "not Detected",
-          waterFlowSensor: 0,
-          humidtySensor: 0,
-          depthSensor: 0,
-          soilmoistureSensor: 0,
-          waterTanker: 0,
-          plantWateringPump: "off",
+          masterBathLight: "off",
           stove: "off",
           oven: "off",
           freezer: "off",
@@ -117,35 +90,7 @@ async function seedDatabase() {
         update: {},
         create: {
           room_id: room.id,
-          mainLight: false,
-          sideLight: false,
-          ac: false,
-          charger: false,
-          music: false,
-          leftHeadLight: false,
-          rightHeadLight: false,
-          goldLight: false,
-          whiteLight: false,
-          tv: false,
-          frontSideLights: false,
-          backSideLights: false,
-          wallLights: false,
-          dangerFence: false,
-          storRoomLight: false,
-          door: false,
-          smartCurtain: false,
-          tempratureSensor: false,
-          gases: false,
-          smokes: false,
-          humiditySensor: false,
-          rainSensors: false,
-          motionDetector: false,
-          waterFlowSensor: false,
-          divider: false,
-          depthSensor: false,
-          soilmoistureSensor: false,
-          waterTanker: false,
-          plantWateringPump: false,
+          masterBathLight: false,
           stove: false,
           oven: false,
           freezer: false,
@@ -162,24 +107,7 @@ async function seedDatabase() {
         }
       });
 
-      // Create Divider record
-      await prisma.divider.upsert({
-        where: { room_id: room.id },
-        update: {},
-        create: {
-          room_id: room.id,
-          plug_1: "off",
-          plug_2: "off",
-          plug_3: "off",
-          plug_4: "off",
-          plug_5: "off",
-          plug_6: "off",
-          plug_7: "off",
-          plug_8: "off"
-        }
-      });
-
-      console.log(`✅ Command, Activity, and Divider records created for ${room.name}`);
+      console.log(`✅ Command and Activity records created for ${room.name}`);
     }
 
     // Create Danger record for the home
@@ -200,7 +128,6 @@ async function seedDatabase() {
     console.log(`   - ${rooms.length} Rooms created`);
     console.log(`   - ${rooms.length} Command records created`);
     console.log(`   - ${rooms.length} Activity records created`);
-    console.log(`   - ${rooms.length} Divider records created`);
     console.log(`   - 1 Danger record created`);
 
   } catch (error) {

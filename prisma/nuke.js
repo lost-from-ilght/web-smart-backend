@@ -66,14 +66,14 @@ async function deleteAllData() {
     console.log(`   ✅ Deleted ${dangers.count} dangers`);
 
     // 4. Delete Users (references Home)
-    console.log('Deleting Users...');
-    const users = await prisma.user.deleteMany({});
-    console.log(`   ✅ Deleted ${users.count} users`);
+    // console.log('Deleting Users...');
+    // const users = await prisma.user.deleteMany({});
+    // console.log(`   ✅ Deleted ${users.count} users`);
 
-    // 5. Delete Homes
-    console.log('Deleting Homes...');
-    const homes = await prisma.home.deleteMany({});
-    console.log(`   ✅ Deleted ${homes.count} homes`);
+    // // 5. Delete Homes
+    // console.log('Deleting Homes...');
+    // const homes = await prisma.home.deleteMany({});
+    // console.log(`   ✅ Deleted ${homes.count} homes`);
 
     // 6. Delete Offices
     console.log('Deleting Offices...');

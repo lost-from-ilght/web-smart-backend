@@ -6,34 +6,7 @@ const activityController = {
     try {
       const { id } = req.params;
       const {
-        mainLight,
-        sideLight,
-        ac,
-        music,
-        leftHeadLight,
-        rightHeadLight,
-        goldLight,
-        whiteLight,
-        tv,
-        frontSideLights,
-        backSideLights,
-        wallLights,
-        storRoomLight,
-        door,
-        smartCurtain,
-        charger,
-        tempratureSensor,
-        humidities,
-        gases,
-        smokes,
-        rainSensors,
-        motionDetector,
-        waterFlowSensor,
-        humiditySensor,
-        depthSensor,
-        soilmoistureSensor,
-        waterTanker,
-        plantWateringPump,
+        masterBathLight,
         stove,
         oven, 
         freezer,
@@ -49,86 +22,23 @@ const activityController = {
         diningStrippeLight,
       } = req.body;
   
-      if (req.body.hasOwnProperty("divider")) {
-        if (req.body.divider) {
-          console.log("Creating a new divider for room:", id);
-          await prisma.divider.create({
-            data: {
-              room_id: id,
-              plug_1: "off",
-              plug_2: "off",
-              plug_3: "off",
-              plug_4: "off",
-              plug_5: "off",
-              plug_6: "off",
-              plug_7: "off",
-              plug_8: "off",
-            },
-          });
-        } else {
-          const dividerToDelete = await prisma.divider.findUnique({
-            where: { room_id: id },
-          });
-  
-          if (dividerToDelete) {
-            console.log("Deleting divider:", dividerToDelete.id);
-            await prisma.divider.delete({
-              where: { id: dividerToDelete.id },
-            });
-          } else {
-            console.log("No divider found for this room.");
-          }
-        }
-      }
-  
-      // Build the update object dynamically
-      const updateData = {
-        mainLight,
-        sideLight,
-        ac,
-        music,
-        leftHeadLight,
-        rightHeadLight,
-        goldLight,
-        whiteLight,
-        tv,
-        charger,
-        frontSideLights,
-        backSideLights,
-        wallLights,
-        storRoomLight,
-        door,
-        smartCurtain,
-        tempratureSensor,
-        humidities,
-        gases,
-        smokes,
-        rainSensors,
-        motionDetector,
-        waterFlowSensor,
-        humiditySensor,
-        depthSensor,
-        soilmoistureSensor,
-        waterTanker,
-        plantWateringPump,
-        stove,
-        oven, 
-        freezer,
-        fan,
-        centerLight,
-        spotLight,
-        shadowLight,
-        diningLight,
-        colliderLight,
-        stove1,
-        stove2,
-        strippeLight,
-        diningStrippeLight,
-      };
-  
-      if (req.body.hasOwnProperty("divider")) {
-        updateData.divider = req.body.divider;
-      }
+      // Build the update object dynamically - only include fields that exist in the Activity model
+      const updateData = {};
+      
+      if (masterBathLight !== undefined) updateData.masterBathLight = masterBathLight;
+      if (stove !== undefined) updateData.stove = stove;
+      if (oven !== undefined) updateData.oven = oven;
+      if (freezer !== undefined) updateData.freezer = freezer;
+      if (fan !== undefined) updateData.fan = fan;
+      if (centerLight !== undefined) updateData.centerLight = centerLight;
+      if (spotLight !== undefined) updateData.spotLight = spotLight;
+      if (shadowLight !== undefined) updateData.shadowLight = shadowLight;
+      if (diningLight !== undefined) updateData.diningLight = diningLight;
+      if (colliderLight !== undefined) updateData.colliderLight = colliderLight;
+      if (stove1 !== undefined) updateData.stove1 = stove1;
+      if (stove2 !== undefined) updateData.stove2 = stove2;
+      if (strippeLight !== undefined) updateData.strippeLight = strippeLight;
+      if (diningStrippeLight !== undefined) updateData.diningStrippeLight = diningStrippeLight;
   
       const updatedActivity = await prisma.activity.update({
         where: { room_id: id },
@@ -146,10 +56,15 @@ const activityController = {
   checkActivity: async (req, res) => {
     try {
       const { id } = req.params;
-      const activity = await prisma.home.findUnique({
+      const home = await prisma.home.findUnique({
         where: { id },
       });
-      res.json(activity.is_active);
+      
+      if (!home) {
+        return res.status(404).json({ error: "Home not found" });
+      }
+      
+      res.json(home.is_active);
     } catch (error) {
       console.error("Error in checkActivity:", error.message, error.stack);
       res.status(500).json({ error: "Failed to check activity" });

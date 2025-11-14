@@ -5,6 +5,11 @@ const roomController = {
     try {
       const { name, home_id } = req.body;
   
+      // Validate required fields
+      if (!name || !home_id) {
+        return res.status(400).json({ error: "Name and home_id are required" });
+      }
+  
       const home = await prisma.home.findUnique({
         where: { id: home_id },
       });
@@ -28,19 +33,15 @@ const roomController = {
       const updatedRoom = await prisma.room.findUnique({
         where: { id: room.id },
         include: {
-          switches: true,
-          onoffs: true,
-          acs: true,
-          musics: true,
-          tvs: true,
           home: true,
-          gases: true,
-          smokes: true,
           command: true,
           activities: true,
-          divider: true,
         },
       });
+
+      if (!updatedRoom) {
+        return res.status(500).json({ error: "Failed to retrieve created room" });
+      }
   
       res.status(201).json(updatedRoom);
     } catch (error) {
@@ -67,16 +68,8 @@ const roomController = {
           home_id:id
         },
         include: {
-          switches: true,
-          onoffs: true,
-          acs: true,
-          musics: true,
-          tvs: true,
-          gases: true,
-          smokes: true,
          command: true,
-         activities: true,
-         divider: true
+         activities: true
         }
       });
       
@@ -89,13 +82,6 @@ const roomController = {
           command = cmdFields;
         }
         
-        // Extract divider without id and room_id
-        let divider = null;
-        if (room.divider) {
-          const { id: divId, room_id: divRoomId, ...divFields } = room.divider;
-          divider = divFields;
-        }
-        
         // Extract activities without id and room_id
         let activities = {};
         if (room.activities) {
@@ -103,66 +89,11 @@ const roomController = {
           activities = actFields;
         }
         
-        // Optimize device arrays - only include necessary fields
-        const optimizedSwitches = (room.switches || []).map(sw => ({
-          id: sw.id,
-          name: sw.name,
-          value: sw.value,
-          description: sw.description
-        }));
-        
-        const optimizedOnoffs = (room.onoffs || []).map(oo => ({
-          id: oo.id,
-          name: oo.name,
-          value: oo.value
-        }));
-        
-        const optimizedAcs = (room.acs || []).map(ac => ({
-          id: ac.id,
-          name: ac.name,
-          value: ac.value
-        }));
-        
-        const optimizedMusics = (room.musics || []).map(m => ({
-          id: m.id,
-          name: m.name,
-          volume: m.volume,
-          playing: m.playing
-        }));
-        
-        const optimizedTvs = (room.tvs || []).map(tv => ({
-          id: tv.id,
-          name: tv.name,
-          channel: tv.channel,
-          volume: tv.volume,
-          isOn: tv.isOn
-        }));
-        
-        const optimizedGases = (room.gases || []).map(g => ({
-          id: g.id,
-          value: g.value,
-          alertTriggered: g.alertTriggered
-        }));
-        
-        const optimizedSmokes = (room.smokes || []).map(s => ({
-          id: s.id,
-          value: s.value,
-          alertTriggered: s.alertTriggered
-        }));
-        
         return {
           id: room.id,
           name: room.name,
-          // switches: optimizedSwitches,
-          // onoffs: optimizedOnoffs,
-          // acs: optimizedAcs,
-          // musics: optimizedMusics,
-          // tvs: optimizedTvs,
-          // gases: optimizedGases,
-          // smokes: optimizedSmokes,
           command: command,
           activities: activities,
-          // divider: divider
         };
       });
       
@@ -179,17 +110,8 @@ const roomController = {
       const room = await prisma.room.findUnique({
         where: { id },
         include: {
-          switches: true,
-          onoffs: true,
-          acs: true,
-          musics: true,
-          tvs: true,
-          gases: true,
-          smokes: true,
          command: true,
          activities: true,
-         divider: true,
-         buttons: true,
         }
       });
 
@@ -205,75 +127,18 @@ const roomController = {
         command = cmdFields;
       }
       
-      // Extract divider without id and room_id
-      let divider = null;
-      if (room.divider) {
-        const { id: divId, room_id: divRoomId, ...divFields } = room.divider;
-        divider = divFields;
+      // Extract activities without id and room_id
+      let activities = {};
+      if (room.activities) {
+        const { id: actId, room_id: actRoomId, ...actFields } = room.activities;
+        activities = actFields;
       }
-      
-
-      // Optimize device arrays - only include necessary fields
-      const optimizedSwitches = (room.switches || []).map(sw => ({
-        id: sw.id,
-        name: sw.name,
-        value: sw.value,
-        description: sw.description
-      }));
-      
-      const optimizedOnoffs = (room.onoffs || []).map(oo => ({
-        id: oo.id,
-        name: oo.name,
-        value: oo.value
-      }));
-      
-      const optimizedAcs = (room.acs || []).map(ac => ({
-        id: ac.id,
-        name: ac.name,
-        value: ac.value
-      }));
-      
-      const optimizedMusics = (room.musics || []).map(m => ({
-        id: m.id,
-        name: m.name,
-        volume: m.volume,
-        playing: m.playing
-      }));
-      
-      const optimizedTvs = (room.tvs || []).map(tv => ({
-        id: tv.id,
-        name: tv.name,
-        channel: tv.channel,
-        volume: tv.volume,
-        isOn: tv.isOn
-      }));
-      
-      const optimizedGases = (room.gases || []).map(g => ({
-        id: g.id,
-        value: g.value,
-        alertTriggered: g.alertTriggered
-      }));
-      
-      const optimizedSmokes = (room.smokes || []).map(s => ({
-        id: s.id,
-        value: s.value,
-        alertTriggered: s.alertTriggered
-      }));
       
       const optimizedRoom = {
         id: room.id,
         name: room.name,
-        switches: optimizedSwitches,
-        onoffs: optimizedOnoffs,
-        acs: optimizedAcs,
-        musics: optimizedMusics,
-        tvs: optimizedTvs,
-        gases: optimizedGases,
-        smokes: optimizedSmokes,
         command: command,
-        activities: room.activities,
-        divider: divider,
-        buttons: room.buttons || [] // Include buttons if needed
+        activities: activities,
       };
       
       res.status(200).json(optimizedRoom);
@@ -315,14 +180,6 @@ const roomController = {
       // Delete related records first
       await prisma.command.deleteMany({ where: { room_id: id } });
       await prisma.activity.deleteMany({ where: { room_id: id } });
-      await prisma.divider.deleteMany({ where: { room_id: id } });
-      await prisma.switch.deleteMany({ where: { room_id: id } });
-      await prisma.onOff.deleteMany({ where: { room_id: id } });
-      await prisma.ac.deleteMany({ where: { room_id: id } });
-      await prisma.music.deleteMany({ where: { room_id: id } });
-      await prisma.tv.deleteMany({ where: { room_id: id } });
-      await prisma.gas.deleteMany({ where: { room_id: id } });
-      await prisma.smoke.deleteMany({ where: { room_id: id } });
   
       // Now delete the room
       await prisma.room.delete({

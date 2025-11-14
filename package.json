@@ -1,6 +1,9 @@
 {
   "devDependencies": {
-    "prisma": "^6.5.0"
+    "prisma": "^6.5.0",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "@jest/globals": "^29.7.0"
   },
   "type": "module",
   "dependencies": {
@@ -18,7 +21,10 @@
     "dev": "node index.js",
     "seed": "node prisma/seed.js",
     "build": "npx prisma generate",
-    "postinstall": "npx prisma generate"
+    "postinstall": "npx prisma generate",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
   },
   "name": "backend-million",
   "version": "1.0.0",
